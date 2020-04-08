@@ -5,12 +5,12 @@ import os
 app = Flask(__name__)
 
 
-@app.route("/gera_numero")
+@app.route("/gera_numero", methods=['GET'])
 def gera_numero():
     return f'{random_set(4)}'
 
 
-@app.route("/inicia")
+@app.route("/inicia", methods=['GET'])
 def inicia():
     local_path = os.getcwd()
     file_path = os.path.join(local_path, 'password.txt')
