@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request
 from random_set import random_set
 import os
 
@@ -22,8 +22,14 @@ def inicia():
     return 'OK'
 
 
-@app.route("/tentativa/<num>")
-def tentativa(num):
+@app.route("/tentativa", methods=['GET'])
+def tentativa():
+
+    try:
+        guess = request.args['num']
+    except KeyError:
+        return 'please submit a number in the key \"num\"'
+
     zeros = 0
     ones = 0
     local_path = os.getcwd()
@@ -32,7 +38,7 @@ def tentativa(num):
     with open(file_path, 'r') as file:
         password = file.readline()
 
-    for index, digit in enumerate(num):
+    for index, digit in enumerate(guess):
         if digit == password[index]:
             ones += 1
         elif digit in password:
