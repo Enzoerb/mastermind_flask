@@ -1,51 +1,44 @@
 from flask import Flask, request
-from random_set import random_set
-import os
+from game import Mastermind
+from multiprocessing import Process
 
 app = Flask(__name__)
 
 
 @app.route("/gera_numero", methods=['GET'])
 def gera_numero():
-    return f'{random_set(4)}'
+    return f'{Mastermind.generate_numbers()}'
 
 
 @app.route("/inicia", methods=['GET'])
 def inicia():
-    local_path = os.getcwd()
-    file_path = os.path.join(local_path, 'password.txt')
-    with open(file_path, 'w') as file:
-        password = random_set(4)
-        for digit in password:
-            file.write(str(digit))
-        file.write('\n')
-    return 'OK'
+    global new_player
+    new_player = Mastermind('mongodb://localhost:27017/', 'mastermind', 'games')
+    return f'{new_player.iniciate()}'
 
 
-@app.route("/tentativa", methods=['GET'])
-def tentativa():
+@app.route("/tentativa/<int:game_id>", methods=['GET'])
+def tentativa(game_id):
 
     try:
         guess = request.args['num']
     except KeyError:
         return 'please submit a number in the key \"num\"'
 
-    zeros = 0
-    ones = 0
-    local_path = os.getcwd()
-    file_path = os.path.join(local_path, 'password.txt')
+    player = Mastermind('mongodb://localhost:27017/', 'mastermind', 'games', game_id)
+    return f'{player.guess_digits(guess)}'
 
-    with open(file_path, 'r') as file:
-        password = file.readline()
 
-    for index, digit in enumerate(guess):
-        if digit == password[index]:
-            ones += 1
-        elif digit in password:
-            zeros += 1
-
-    return "0"*zeros + "1"*ones
+def clear_inactive():
+    game = Mastermind('mongodb://localhost:27017/', 'mastermind', 'games')
+    data_base = game.data_base
+    while True:
+        data_base.delete_inactive()
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+
+    p = Process(target=clear_inactive)
+    p.start()
+    app.run(debug=True, use_reloader=False)
+    p.join()

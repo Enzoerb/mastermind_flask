@@ -1,4 +1,5 @@
 # mastermind_flask
+README.md will be updated soon
 
 ## flask_api.py
 this flask api has three functions(gera_numero, inicia and tentativa)
@@ -9,9 +10,9 @@ the function "inicia" calls the random_set function from the random_set module s
 ### tentativa
 given a number the "tentativa" function compares it with the one saved in the password.txt file and returns (1)how many digits are in the same position and (0)how many digits are in both numbers but not in same position
 #### exemple:
-given number: 0512; 
-password: 0925; 
-output: 001; 
+given number: 0512;
+password: 0925;
+output: 001;
 
 ## random_set.py
 random_set.py has only the random_set function
