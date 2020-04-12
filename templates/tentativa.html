@@ -1,0 +1,28 @@
+{% extends "layout.html" %}
+{% block content %}
+    <h1>Give Your Best Tries</h1>
+    <hr/>
+    <p><big><big><big>
+        <b>Guess:</b> {{ actual_try.guess }}
+    </big></big></big></p>
+    <p><big><big><big>
+        <b>Response:</b> {{ actual_try.response }}
+    </big></big></big></p>
+    <big><big>
+        <p><b>remaining tries:</b> {{ remaining }}</p>
+        <p><b>last guesses and responses:</b></p>
+    </big></big>
+
+    <ol>
+        {% for try in tries %}
+            <li>
+                <p><b>Guess:</b> {{ try.guess }}<p>
+                <p><b>Response:</b> {{ try.response }}<p>
+            </li>
+        {% endfor %}
+    </ol>
+
+    <a href="http://localhost:5000/" style="color: black">
+        <h3><b>Home Page</b></h3>
+    </a>
+{% endblock content %}

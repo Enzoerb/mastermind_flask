@@ -20,7 +20,7 @@ class Mastermind:
     def iniciate(self):
         password = self.generate_numbers()
         self.game_id = self.data_base.create_game(list(password))
-        return f'Game ID: {self.game_id}'
+        return f'{self.game_id}'
 
     def guess_digits(self, guess):
 
@@ -29,8 +29,8 @@ class Mastermind:
             return 'Game not found, wrong id'
 
         tries = self.data_base.get_tries(self.game_id)
-        tries += 1
-        self.data_base.update_tries(self.game_id, tries)
+        actual_try = dict()
+        actual_try["guess"] = guess
 
         in_both = 0
         same_index = 0
@@ -44,11 +44,15 @@ class Mastermind:
 
         if(same_index == len(password)):
             self.data_base.delete_game(self.game_id)
-            return f"Congrats!! you guessed it with {tries} tries"
-        elif tries >= 10:
+            return (f"Congrats!! you guessed it with {len(tries)} tries", "green")
+        elif len(tries) >= 9:
             self.data_base.delete_game(self.game_id)
-            return "you lost, try again"
-        return "0"*in_both + "1"*same_index
+            return ("you lost, try again", "red")
+
+        actual_try["response"] = ("0"*in_both + "1"*same_index)
+        tries.append(actual_try)
+        self.data_base.update_tries(self.game_id, tries)
+        return tries
 
 
 if __name__ == '__main__':

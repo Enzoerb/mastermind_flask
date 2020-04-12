@@ -15,7 +15,7 @@ class MastermindDB:
             game_id += 1
         else:
             game = {"game_id": game_id, "password": password,
-                    "tries": 0, "last_try": datetime.now()}
+                    "tries": list(), "last_try": datetime.now()}
             self.collection.insert_one(game)
 
         return game_id
@@ -80,5 +80,6 @@ class MastermindDB:
 if __name__ == '__main__':
     DataBase = MastermindDB('mongodb://localhost:27017/', 'mastermind', 'games')
     DataBase.create_game([1, 2, 3, 4])
+    print(DataBase.get_tries(1))
     print(DataBase.delete_inactive())
     print(DataBase.clear_all_games())

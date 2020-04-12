@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        {% if title %}
+            <title>Mastermind - {{ title }}</title>
+        {% else %}
+            <title>Mastermind</title>
+        {% endif %}
+    </head>
+    <body style="background-color: lightblue">
+        {% block content %}{% endblock %}
+    </body>
+</html>
