@@ -15,7 +15,7 @@ class Mastermind:
         numbers = set()
         while(len(numbers) < length):
             numbers.add(randint(0, 9))
-        return numbers
+        return list(numbers)
 
     def iniciate(self):
         password = self.generate_numbers()
