@@ -60,22 +60,28 @@ def tentativa(game_id):
                         game_id)
     response = player.guess_digits(guess)
 
-    curl_game = f'{response[-1]}\n'
-    game_template = render_template("tentativa.html",
-                                    tries=response,
-                                    remaining=10-len(response),
-                                    actual_try=response[-1],
-                                    title=f'tentativa {len(response)+1}')
-
-    curl_end = f'{response[0]}\n'
-    end_template = render_template("lost_win.html",
-                                   response=response,
-                                   title='fim')
-
     if type(response) == type(list()):
+        curl_game = f'remaining:{10-len(response)}\n{response[-1]}\n'
+        game_template = render_template("tentativa.html",
+                                        tries=response,
+                                        remaining=10-len(response),
+                                        actual_try=response[-1],
+                                        title=f'tentativa {len(response)+1}')
         return curl_game if "curl" in user_agent else game_template
-    else:
+    elif len(response) > 2:
+        curl_end = f'{response[0]}\npassword: {response[2]}\nlast_try: {response[3]}\n'
+        end_template = render_template("lost_win.html",
+                                       response=response,
+                                       password=response[2],
+                                       last_try=response[3],
+                                       title='fim')
         return curl_end if "curl" in user_agent else end_template
+    else:
+        curl_notfound = f'{response[0]}\n'
+        notfound_template = render_template("id_notfound.html",
+                                            response=response,
+                                            title='not found')
+        return curl_notfound if "curl" in user_agent else notfound_template
 
 
 def clear_inactive():

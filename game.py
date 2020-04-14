@@ -42,16 +42,19 @@ class Mastermind:
             elif str(digit) in str(password):
                 in_both += 1
 
-        if(same_index == len(password)):
-            self.data_base.delete_game(self.game_id)
-            return (f"Congrats!! you guessed it with {len(tries)} tries", "green")
-        elif len(tries) >= 9:
-            self.data_base.delete_game(self.game_id)
-            return ("you lost, try again", "red")
-
         actual_try["response"] = ("0"*in_both + "1"*same_index)
         tries.append(actual_try)
         self.data_base.update_tries(self.game_id, tries)
+
+        if(same_index == len(password)):
+            self.data_base.delete_game(self.game_id)
+            return (f"Congrats!! you guessed it with {len(tries)} tries", "green",
+                    password, actual_try)
+        elif len(tries) >= 10:
+            self.data_base.delete_game(self.game_id)
+            return ("you lost, try again", "red",
+                    password, actual_try)
+
         return tries
 
 
