@@ -17,24 +17,11 @@ class Mastermind:
             numbers.add(randint(0, 9))
         return list(numbers)
 
-    def iniciate(self):
-        password = self.generate_numbers()
-        self.game_id = self.data_base.create_game(list(password))
-        return f'{self.game_id}'
+    @staticmethod
+    def check_password(guess, password):
 
-    def guess_digits(self, guess):
-
-        game = self.data_base.find_game(self.game_id)
-        if game == None:
-            return ('Game not found, wrong id', 'black')
-
-        tries = self.data_base.get_tries(self.game_id)
-        actual_try = dict()
-        actual_try["guess"] = guess
-
-        in_both = 0
         same_index = 0
-        password = self.data_base.get_password(self.game_id)
+        in_both = 0
 
         for index, digit in enumerate(guess):
             if str(digit) == str(password[index]):
@@ -42,18 +29,42 @@ class Mastermind:
             elif str(digit) in str(password):
                 in_both += 1
 
-        actual_try["response"] = ("0"*in_both + "1"*same_index)
+        response = "0"*in_both + "1"*same_index
+        return response
+
+    def iniciate(self):
+        password = self.generate_numbers()
+        self.game_id = self.data_base.create_game(list(password))
+        return f'{self.game_id}'
+
+    def add_try(self, guess, response):
+        actual_try = dict()
+        actual_try["guess"] = guess
+        actual_try["response"] = response
+
+        tries = self.data_base.get_tries(self.game_id)
         tries.append(actual_try)
         self.data_base.update_tries(self.game_id, tries)
 
-        if(same_index == len(password)):
+    def guess_digits(self, guess):
+
+        game = self.data_base.find_game(self.game_id)
+        if game == None:
+            return ('Game not found, wrong id', 'black')
+
+        password = self.data_base.get_password(self.game_id)
+        response = self.check_password(guess, password)
+        self.add_try(guess, response)
+        tries = self.data_base.get_tries(self.game_id)
+
+        if(response == "1"*len(password)):
             self.data_base.delete_game(self.game_id)
             return (f"Congrats!! you guessed it with {len(tries)} tries", "green",
-                    password, actual_try)
+                    password, tries[-1])
         elif len(tries) >= 10:
             self.data_base.delete_game(self.game_id)
             return ("you lost, try again", "red",
-                    password, actual_try)
+                    password, tries[-1])
 
         return tries
 
