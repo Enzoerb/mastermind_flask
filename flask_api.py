@@ -45,21 +45,8 @@ def get_id():
     return curl_no_gameid if "curl" in user_agent else template_no_gameid
 
 
-@app.route("/tentativa/<int:game_id>", methods=['GET'])
-def tentativa(game_id):
+def format_response(response):
     user_agent = str(request.user_agent)
-    try:
-        guess = request.args['num']
-    except KeyError:
-        curl_keyerror = f'please enter a guess in key \"num\"\n'
-        template_keyerror = render_template("waiting_guess.html",
-                                            title='palpite')
-        return curl_keyerror if "curl" in user_agent else template_keyerror
-
-    player = Mastermind('mongodb://localhost:27017/', 'mastermind', 'games',
-                        game_id)
-    response = player.guess_digits(guess)
-
     if type(response) == type(list()):
         curl_game = f'remaining:{10-len(response)}\n{response[-1]}\n'
         game_template = render_template("tentativa.html",
@@ -82,6 +69,23 @@ def tentativa(game_id):
                                             response=response,
                                             title='not found')
         return curl_notfound if "curl" in user_agent else notfound_template
+
+
+@app.route("/tentativa/<int:game_id>", methods=['GET'])
+def tentativa(game_id):
+    user_agent = str(request.user_agent)
+    try:
+        guess = request.args['num']
+    except KeyError:
+        curl_keyerror = f'please enter a guess in key \"num\"\n'
+        template_keyerror = render_template("waiting_guess.html",
+                                            title='palpite')
+        return curl_keyerror if "curl" in user_agent else template_keyerror
+
+    player = Mastermind('mongodb://localhost:27017/', 'mastermind', 'games', game_id)
+    response = player.guess_digits(guess)
+    formatted_response = format_response(response)
+    return formatted_response
 
 
 def clear_inactive():
