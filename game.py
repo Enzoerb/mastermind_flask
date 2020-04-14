@@ -26,7 +26,7 @@ class Mastermind:
 
         game = self.data_base.find_game(self.game_id)
         if game == None:
-            return 'Game not found, wrong id'
+            return ('Game not found, wrong id', 'black')
 
         tries = self.data_base.get_tries(self.game_id)
         actual_try = dict()
