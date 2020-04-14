@@ -2,8 +2,9 @@
 {% block content %}
 
 <h1 style="color: {{ response[1] }}" id="state">{{ response[0] }}</h1>
-<p id="password">password: {{ password }}</p>
-<p id="last_try">last try: {{ last_try }}</p>
+<p id="password"><b>password:</b> {{ password }}</p>
+<p id="last_guess"><b>last guess:</b> {{ last_try.guess }}</p>
+<p id="last_response"><b>last response:</b> {{ last_try.response }}</p>
 <hr/>
 <a href="http://localhost:5000/" style="color: black">
     <h3><b>Home Page</b></h3>
