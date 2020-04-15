@@ -90,16 +90,14 @@ def format_response(response, game_id):
 
 @app.route("/enter_key/<int:game_id>", methods=['GET', 'POST'])
 def enter_key(game_id):
-    user_agent = str(request.user_agent)
     form = GuessNumberForm()
     if form.validate_on_submit():
         return redirect(url_for('tentativa',
                                 game_id=game_id, num=form.guess.data))
 
-    curl_keyerror = f'please enter a guess in key \"num\"\n'
     template_keyerror = render_template("waiting_guess.html",
                                         title='palpite', form=form)
-    return curl_keyerror if "curl" in user_agent else template_keyerror
+    return template_keyerror
 
 
 @app.route("/tentativa/<int:game_id>", methods=['GET', 'POST'])
@@ -108,7 +106,9 @@ def tentativa(game_id):
     try:
         guess = request.args['num']
     except KeyError:
-        return redirect(url_for("enter_key", game_id=game_id))
+        curl_keyerror = f'please enter a guess in key \"num\"\n'
+        not_curl = redirect(url_for("enter_key", game_id=game_id))
+        return curl_keyerror if 'curl' in user_agent else not_curl
 
     player = Mastermind('mongodb://localhost:27017/', 'mastermind', 'games', game_id)
     response = player.guess_digits(guess)
