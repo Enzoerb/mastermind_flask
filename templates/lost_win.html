@@ -6,10 +6,7 @@
 <p id="last_guess"><b>last guess:</b> {{ last_try.guess }}</p>
 <p id="last_response"><b>last response:</b> {{ last_try.response }}</p>
 <hr/>
-<a href="http://localhost:5000/" style="color: black">
-    <h3><b>Home Page</b></h3>
-</a>
-<a href="http://localhost:5000/inicia" style="color: black">
+<a href="{{ url_for('inicia') }}" style="color: black">
     <h3><b>New Game</b></h3>
 </a>
 {% endblock content %}

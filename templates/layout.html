@@ -8,6 +8,20 @@
         {% endif %}
     </head>
     <body style="background-color: lightblue">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
         {% block content %}{% endblock %}
+        {% if title %}
+            <a href="{{ url_for('home') }}" style="color: black">
+                <h3><b>Home Page</b></h3>
+            </a>
+        {% endif %}
     </body>
 </html>

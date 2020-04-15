@@ -1,4 +1,15 @@
 {% extends "layout.html" %}
 {% block content %}
-    <h3 id="state">please enter a guess in key "num"</h3>
+    <h3 id="state">please enter a guess</h3>
+    <div>
+        <form action="" method="POST">
+            {{ form.hidden_tag() }}
+            <div>
+                {{ form.guess }}
+            </div>
+            <div>
+                {{ form.submit }}
+            </div>
+        </form>
+    </div>
 {% endblock content %}

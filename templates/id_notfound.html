@@ -3,10 +3,7 @@
 
 <h1 style="color: {{ response[1] }}" id="state">{{ response[0] }}</h1>
 <hr/>
-<a href="http://localhost:5000/" style="color: black">
-    <h3><b>Home Page</b></h3>
-</a>
-<a href="http://localhost:5000/inicia" style="color: black">
+<a href="{{ url_for('inicia') }}" style="color: black">
     <h3><b>New Game</b></h3>
 </a>
 {% endblock content %}
