@@ -45,8 +45,15 @@ def get_id():
     user_agent = str(request.user_agent)
     form = GetIdForm()
     if form.validate_on_submit():
-        return redirect(url_for('tentativa',
-                                game_id=form.game_id.data))
+        game_id = form.game_id.data
+        player = Mastermind('mongodb://localhost:27017/', 'mastermind', 'games', game_id)
+        if not player.check_gameid():
+            flash(f'Game id {game_id} not found')
+            redirect(url_for("get_id"))
+        else:
+            flash(f'Entered in game {game_id}')
+            return redirect(url_for('tentativa',
+                                    game_id=game_id))
 
     curl_no_gameid = 'please enter a game id\n'
     template_no_gameid = render_template("game_id.html",
@@ -66,7 +73,7 @@ def format_response(response, form):
                                         form=form)
         return curl_game if "curl" in user_agent else game_template
 
-    elif len(response) > 2:
+    else:
         curl_end = f'{response[0]}\npassword: {response[2]}\nlast_try: {response[3]}\n'
         end_template = render_template("lost_win.html",
                                        response=response,
@@ -75,42 +82,55 @@ def format_response(response, form):
                                        title='fim')
         return curl_end if "curl" in user_agent else end_template
 
-    else:
-        curl_notfound = f'{response[0]}\n'
-        notfound_template = render_template("id_notfound.html",
-                                            response=response,
-                                            title='not found')
-        return curl_notfound if "curl" in user_agent else notfound_template
 
-
-@app.route("/enter_key/<int:game_id>", methods=['GET', 'POST'])
-def enter_key(game_id):
+def enter_key(player):
+    game_id = player.game_id
     form = GuessNumberForm()
     if form.validate_on_submit():
         return redirect(url_for('tentativa',
                                 game_id=game_id, num=form.guess.data))
 
-    template_keyerror = render_template("waiting_guess.html",
-                                        title='palpite', form=form)
+    data_base = player.data_base
+    tries = data_base.get_tries(game_id)
+    if len(tries) == 0:
+        template_keyerror = render_template("tentativa.html",
+                                            tries=None,
+                                            remaining=10,
+                                            actual_try={'guess': 'Nothing Entered',
+                                                        'response': 'Waiting First Guess'},
+                                            title=f'tentativa 1',
+                                            form=form)
+    else:
+        template_keyerror = render_template("tentativa.html",
+                                            tries=tries,
+                                            remaining=10-len(tries),
+                                            actual_try=tries[-1],
+                                            title=f'tentativa {len(tries)+1}',
+                                            form=form)
     return template_keyerror
 
 
 @app.route("/tentativa/<int:game_id>", methods=['GET', 'POST'])
 def tentativa(game_id):
     user_agent = str(request.user_agent)
+    player = Mastermind('mongodb://localhost:27017/', 'mastermind', 'games', game_id)
+    if not player.check_gameid():
+        alert = f'Game id {player.game_id} not found\n'
+        flash(alert)
+        return alert if 'curl' in user_agent else redirect(url_for("get_id"))
+
     try:
         guess = request.args['num']
     except KeyError:
         curl_keyerror = f'please enter a guess in key \"num\"\n'
-        not_curl = redirect(url_for("enter_key", game_id=game_id))
-        return curl_keyerror if 'curl' in user_agent else not_curl
+        template_keyerror = enter_key(player)
+        return curl_keyerror if 'curl' in user_agent else template_keyerror
 
     form = GuessNumberForm()
     if form.validate_on_submit():
         return redirect(url_for('tentativa',
                                 game_id=game_id, num=form.guess.data))
 
-    player = Mastermind('mongodb://localhost:27017/', 'mastermind', 'games', game_id)
     response = player.guess_digits(guess)
     formatted_response = format_response(response, form)
     return formatted_response

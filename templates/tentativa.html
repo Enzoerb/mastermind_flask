@@ -34,13 +34,19 @@
         <p><b>last guesses and responses:</b></p>
     </big></big>
 
-    <ol id="tries_list">
-        {% for try in tries %}
-            <li>
-                <p><b>Guess:</b> {{ try.guess }}<p>
-                <p><b>Response:</b> {{ try.response }}<p>
-            </li>
-        {% endfor %}
-    </ol>
+    {% if not tries %}
+        <ul>
+            <li><p>No guesses and responses</p></li>
+        </ul>
+    {% else %}
+        <ol id="tries_list">
+            {% for try in tries %}
+                <li>
+                    <p><b>Guess:</b> {{ try.guess }}<p>
+                    <p><b>Response:</b> {{ try.response }}<p>
+                </li>
+            {% endfor %}
+        </ol>
+    {% endif %}
 
 {% endblock content %}

@@ -18,8 +18,16 @@ class Mastermind:
         return list(numbers)
 
     @staticmethod
-    def check_password(guess, password):
+    def check_fix_guess(guess, password):
+        if len(str(guess)) > len(password):
+            to_remove = len(str(guess)) - 4
+            guess = str(int(guess) // 10**to_remove)
+        return guess
 
+    @classmethod
+    def check_password(cls, guess, password):
+
+        guess = cls.check_fix_guess(guess, password)
         same_index = 0
         in_both = 0
 
@@ -46,13 +54,17 @@ class Mastermind:
         tries.append(actual_try)
         self.data_base.update_tries(self.game_id, tries)
 
+    def check_gameid(self):
+        game = self.data_base.find_game(self.game_id)
+        if game == None:
+            return False
+        return True
+
     def guess_digits(self, guess):
 
         game = self.data_base.find_game(self.game_id)
-        if game == None:
-            return ('Game not found, wrong id', 'black')
-
         password = self.data_base.get_password(self.game_id)
+        guess = self.check_fix_guess(guess, password)
         response = self.check_password(guess, password)
         self.add_try(guess, response)
         tries = self.data_base.get_tries(self.game_id)
