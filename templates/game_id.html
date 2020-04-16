@@ -5,7 +5,12 @@
         <form action="" method="POST">
             {{ form.hidden_tag() }}
             <div>
-                {{ form.game_id }}
+                <p>{{ form.game_id.label }}</p>
+                <p>{{ form.game_id }}</p>
+            </div>
+            <div>
+                <p>{{ form.entered_key.label }}</p>
+                <p>{{ form.entered_key }}</p>
             </div>
             <div>
                 {{ form.submit }}

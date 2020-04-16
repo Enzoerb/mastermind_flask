@@ -1,7 +1,7 @@
 from flask import Flask, request, render_template, url_for, flash, redirect
 from multiprocessing import Process
 from game import Mastermind
-from forms import GuessNumberForm, GetIdForm
+from forms import GuessNumberForm, EnterGameForm, CreateGameForm
 
 app = Flask(__name__)
 
@@ -30,25 +30,45 @@ def gera_numero():
     return curl_numbers if "curl" in user_agent else template_numbers
 
 
-@app.route("/inicia", methods=['GET'])
+@app.route("/inicia", methods=['GET', 'POST'])
 def inicia():
     user_agent = str(request.user_agent)
     new_player = Mastermind('mongodb://localhost:27017/', 'mastermind', 'games')
-    id = new_player.iniciate()
-    curl_id = f'{id}\n'
-    template_id = render_template("inicia.html", id=id, title='inicia')
-    return curl_id if "curl" in user_agent else template_id
+
+    game_id = 'waiting password'
+    form = CreateGameForm()
+    if form.validate_on_submit():
+        game_id = new_player.iniciate()
+        room_key = form.room_key.data
+        new_player.create_roomkey(room_key)
+        flash(f'Entered in game {game_id}')
+        return redirect(url_for('tentativa', game_id=game_id))
+    else:
+        for error in form.confirm_roomkey.errors:
+            flash(error)
+
+    if 'curl' in user_agent:
+        game_id = new_player.iniciate()
+        curl_id = f'{game_id}\n'
+        return curl_id
+
+    template_id = render_template("inicia.html",
+                                  title='inicia', form=form)
+    return template_id
 
 
 @app.route("/tentativa", methods=['GET', 'POST'])
 def get_id():
     user_agent = str(request.user_agent)
-    form = GetIdForm()
+    form = EnterGameForm()
     if form.validate_on_submit():
         game_id = form.game_id.data
         player = Mastermind('mongodb://localhost:27017/', 'mastermind', 'games', game_id)
         if not player.check_gameid():
             flash(f'Game id {game_id} not found')
+            redirect(url_for("get_id"))
+        elif not player.confirm_key(form.entered_key.data):
+            flash(f'wrong password for room {game_id}')
             redirect(url_for("get_id"))
         else:
             flash(f'Entered in game {game_id}')

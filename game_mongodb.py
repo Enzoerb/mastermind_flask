@@ -14,7 +14,7 @@ class MastermindDB:
         while self.collection.find_one({"game_id": game_id}) != None:
             game_id += 1
         else:
-            game = {"game_id": game_id, "password": password,
+            game = {"game_id": game_id, "room_key": '', "password": password,
                     "tries": list(), "last_try": datetime.now()}
             self.collection.insert_one(game)
 
@@ -56,6 +56,15 @@ class MastermindDB:
         else:
             return False
 
+    def update_roomkey(self, game_id, room_key):
+        game = self.collection.find_one({"game_id": game_id})
+        if(game != None):
+            update = {"$set": {"room_key": room_key}}
+            self.collection.update_one(game, update)
+            return True
+        else:
+            return False
+
     def get_tries(self, game_id):
         game = self.collection.find_one({"game_id": game_id})
         return game["tries"] if game != None else None
@@ -63,6 +72,10 @@ class MastermindDB:
     def get_password(self, game_id):
         game = self.collection.find_one({"game_id": game_id})
         return game["password"] if game != None else None
+
+    def get_roomkey(self, game_id):
+        game = self.collection.find_one({"game_id": game_id})
+        return game["room_key"] if game != None else None
 
     def delete_inactive(self):
         deleted = 0

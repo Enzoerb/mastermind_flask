@@ -1,7 +1,9 @@
 from game_mongodb import MastermindDB
+from flask_bcrypt import Bcrypt
 from random import randint
-import pymongo
 import os
+
+bcrypt = Bcrypt()
 
 
 class Mastermind:
@@ -45,6 +47,13 @@ class Mastermind:
         self.game_id = self.data_base.create_game(list(password))
         return f'{self.game_id}'
 
+    def create_roomkey(self, entered_key):
+        if entered_key != '':
+            room_key = bcrypt.generate_password_hash(entered_key).decode('utf-8')
+            self.data_base.update_roomkey(self.game_id, room_key)
+        else:
+            self.data_base.update_roomkey(self.game_id, '')
+
     def add_try(self, guess, response):
         actual_try = dict()
         actual_try["guess"] = guess
@@ -79,6 +88,16 @@ class Mastermind:
                     password, tries[-1])
 
         return tries
+
+    def confirm_key(self, entered_key):
+        room_key = self.data_base.get_roomkey(self.game_id)
+        if room_key == '':
+            return True
+        elif entered_key != '':
+            check_key = bcrypt.check_password_hash(room_key, entered_key)
+            return check_key
+        else:
+            return False
 
 
 if __name__ == '__main__':

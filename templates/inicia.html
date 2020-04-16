@@ -2,5 +2,20 @@
 {% block content %}
     <h1>Initializing Game</h1>
     <hr/>
-    <a href="{{ url_for('tentativa', game_id=id) }}", id="game_id"><h2>Game ID: {{ id }}</h2></a>
+    <div>
+        <form action="" method="POST">
+            {{ form.hidden_tag() }}
+            <div>
+                <p>{{ form.room_key.label }}</p>
+                <p>{{ form.room_key }}</p>
+            </div>
+            <div>
+                <p>{{ form.confirm_roomkey.label }}</p>
+                <p>{{ form.confirm_roomkey }}</p>
+            </div>
+            <div>
+                {{ form.submit }}
+            </div>
+        </form>
+    </div>
 {% endblock content %}
