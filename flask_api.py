@@ -54,14 +54,9 @@ def get_id():
     return curl_no_gameid if "curl" in user_agent else template_no_gameid
 
 
-def format_response(response, game_id):
+def format_response(response, form):
     user_agent = str(request.user_agent)
     if type(response) == type(list()):
-        form = GuessNumberForm()
-        if form.validate_on_submit():
-            return redirect(url_for('tentativa',
-                                    game_id=game_id, num=form.guess.data))
-
         curl_game = f'remaining:{10-len(response)}\n{response[-1]}\n'
         game_template = render_template("tentativa.html",
                                         tries=response,
@@ -110,9 +105,14 @@ def tentativa(game_id):
         not_curl = redirect(url_for("enter_key", game_id=game_id))
         return curl_keyerror if 'curl' in user_agent else not_curl
 
+    form = GuessNumberForm()
+    if form.validate_on_submit():
+        return redirect(url_for('tentativa',
+                                game_id=game_id, num=form.guess.data))
+
     player = Mastermind('mongodb://localhost:27017/', 'mastermind', 'games', game_id)
     response = player.guess_digits(guess)
-    formatted_response = format_response(response, game_id)
+    formatted_response = format_response(response, form)
     return formatted_response
 
 
