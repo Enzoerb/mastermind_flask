@@ -82,5 +82,5 @@ if a guess is given it runs the guess_digits function from the Mastermind class 
 it can be called as '/tentativa/<int:game_id>?num=guess'
 
 
-###clear_inactive
+### clear_inactive
 this function keeps running dunring all the execution calling the delete_inactive function from MastermindDB class
