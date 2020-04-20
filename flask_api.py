@@ -1,7 +1,7 @@
 from flask import Flask, request, render_template, url_for, flash, redirect, session
 from multiprocessing import Process
 from game import Mastermind
-from forms import GuessNumberForm, EnterGameForm, CreateGameForm
+from forms import GuessNumberForm, EnterGameForm, CreateGameForm, GenerateNumber
 
 app = Flask(__name__)
 
@@ -19,14 +19,18 @@ def home():
     return curl_homepage if "curl" in user_agent else template_homepage
 
 
-@app.route("/gera_numero", methods=['GET'])
+@app.route("/gera_numero", methods=['GET', 'POST'])
 def gera_numero():
+    form = GenerateNumber()
     user_agent = str(request.user_agent)
     numbers = Mastermind.generate_numbers()
     curl_numbers = f'{numbers}\n'
+    if form.validate_on_submit():
+        return redirect(url_for("gera_numero"))
     template_numbers = render_template('gera_numeros.html',
                                        numeros=numbers,
-                                       title='gerador')
+                                       title='gerador',
+                                       form=form)
     return curl_numbers if "curl" in user_agent else template_numbers
 
 

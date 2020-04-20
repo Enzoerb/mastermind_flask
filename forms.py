@@ -20,3 +20,7 @@ class CreateGameForm(FlaskForm):
     confirm_roomkey = PasswordField('Confirm Password',
                                     validators=[EqualTo('room_key')])
     submit = SubmitField('Play Game')
+
+
+class GenerateNumber(FlaskForm):
+    submit = SubmitField('Generate Again')
