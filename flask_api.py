@@ -2,7 +2,7 @@ from flask import Flask, request, render_template, url_for, flash, redirect, ses
 from multiprocessing import Process
 from game import Mastermind
 from game_mongodb import PlayerDB, UserLogin
-from forms import GuessNumberForm, EnterGameForm, CreateGameForm, GenerateNumberForm, LoginForm, RegistrationForm
+from forms import GuessNumberForm, EnterGameForm, CreateGameForm, GenerateNumberForm, LoginForm, RegistrationForm, AccountUpdateForm
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 
@@ -49,7 +49,8 @@ def register():
         if data_base.create_player(form.username.data, form.email.data, hashed_password):
             flash(f'account created for {form.username.data}')
             player = data_base.find_document(form.username.data, "username")
-            login_user(UserLogin({key: player[key] for key in player if key != '_id'}))
+            login_user(UserLogin({key: player[key]
+                                  for key in player if key not in ('_id', 'password')}))
             return redirect(url_for('home'))
         else:
             check_invalid_registration(data_base, form)
@@ -84,7 +85,8 @@ def login():
                 return redirect(url_for('login'))
             else:
                 flash('logged in')
-                login_user(UserLogin({key: player[key] for key in player if key != '_id'}))
+                login_user(UserLogin({key: player[key]
+                                      for key in player if key not in ('_id', 'password')}))
                 return redirect(url_for('home'))
 
     return render_template('login.html',
@@ -103,13 +105,76 @@ def logout():
 @app.route("/account")
 @login_required
 def account():
-    return f'{current_user.user_dict["email"]}'
+    return render_template("account.html", title="account")
+
+
+def check_password(password):
+    data_base = PlayerDB('mongodb://localhost:27017/', 'mastermind', 'players')
+    player = data_base.find_document(current_user.user_dict["username"], "username")
+    if bcrypt.check_password_hash(player["password"], password):
+        return True
+    return False
 
 
 @app.route("/account/update", methods=['GET', 'POST'])
 @login_required
 def account_update():
-    return 'update name'
+    username = current_user.user_dict["username"]
+    user_email = current_user.user_dict["email"]
+    form = AccountUpdateForm()
+    if form.validate_on_submit():
+        if not check_password(form.password.data):
+            flash('wrong password')
+            return redirect(url_for('account_update'))
+        data_base = PlayerDB('mongodb://localhost:27017/', 'mastermind', 'players')
+        if form.email.data == user_email and form.username.data == username:
+            current_user.user_dict["username"] = form.username.data
+            current_user.user_dict["email"] = form.email.data
+            flash('information sucessfully updated')
+            return redirect(url_for('account'))
+        elif form.email.data == user_email:
+            if data_base.check_username(form.username.data):
+                flash(f'username "{form.username.data}" already in use')
+                return redirect(url_for('account_update'))
+            else:
+                current_user.user_dict["username"] = form.username.data
+                current_user.user_dict["email"] = form.email.data
+                data_base.update_username(username, form.username.data)
+                flash('information sucessfully updated')
+                return redirect(url_for('account'))
+        elif form.username.data == username:
+            if data_base.check_email(form.email.data):
+                flash(f'email "{form.email.data}" already in use')
+                return redirect(url_for('account_update'))
+            else:
+                current_user.user_dict["username"] = form.username.data
+                current_user.user_dict["email"] = form.email.data
+                data_base.update_email(username, form.email.data)
+                flash('information sucessfully updated')
+                return redirect(url_for('account'))
+        else:
+            check = True
+            if data_base.check_username(form.username.data):
+                flash(f'username "{form.username.data}" already in use')
+                check = False
+            if data_base.check_email(form.email.data):
+                flash(f'email "{form.email.data}" already in use')
+                check = False
+            if not check:
+                return redirect(url_for('account_update'))
+            else:
+                current_user.user_dict["username"] = form.username.data
+                current_user.user_dict["email"] = form.email.data
+                data_base.update_username(username, form.username.data)
+                data_base.update_email(username, form.email.data)
+                flash('information sucessfully updated')
+                return redirect(url_for('account'))
+
+    elif request.method == "GET":
+        form.username.data = username
+        form.email.data = user_email
+
+    return render_template("update.html", title="update", form=form)
 
 
 @app.route("/gera_numero", methods=['GET', 'POST'])

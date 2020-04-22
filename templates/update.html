@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 {% block content %}
 
-    <h1>Login Now</h1>
+    <h1>Update Account</h1>
 
     <div>
         <form action="" method="POST">
@@ -25,9 +25,8 @@
     </div>
 
     <small>
-        Already Have an account?
-        <a href="{{ url_for('register') }}" style="color: black">
-            <b>Sing Up</b>
+        <a href="{{ url_for('account') }}" style="color: black">
+            <h3><b>Account Page</b></h3>
         </a>
-     </small>
+    </small>
 {% endblock content %}

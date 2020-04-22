@@ -124,7 +124,7 @@ class PlayerDB(DefaultDB):
 
     def update_username(self, username, new_username):
         player = self.collection.find_one({"username": username})
-        if check_username(new_username):
+        if self.check_username(new_username):
             return False
         if player != None:
             update = {"$set": {"username": new_username}}
@@ -134,7 +134,7 @@ class PlayerDB(DefaultDB):
 
     def update_email(self, username, new_email):
         player = self.collection.find_one({"username": username})
-        if check_email(new_email):
+        if self.check_email(new_email):
             return False
         if player != None:
             update = {"$set": {"email": new_email}}
