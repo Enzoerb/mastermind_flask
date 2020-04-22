@@ -121,7 +121,7 @@ def account_update():
             flash('wrong password')
             return redirect(url_for('account_update'))
         else:
-            update_user_information(data_base, username, new_username, email, new_email)
+            return update_user_information(data_base, username, new_username, email, new_email)
 
     elif request.method == "GET":
         form.username.data = username

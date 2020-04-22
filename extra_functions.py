@@ -27,11 +27,16 @@ def update_user_information(data_base, username, new_username, email, new_email)
         current_user.user_dict["username"] = new_username
     else:
         flash(f'username "{new_username}" already in use')
+
     if data_base.update_email(username, new_email) or (new_email == email):
+        flash('email updated')
+        current_user.user_dict["email"] = new_email
+    elif data_base.update_email(new_username, new_email) or (new_email == email):
         flash('email updated')
         current_user.user_dict["email"] = new_email
     else:
         flash(f'email {new_email} already in use')
+
     return redirect(url_for('account'))
 
 
