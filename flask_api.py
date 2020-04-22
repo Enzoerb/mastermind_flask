@@ -1,11 +1,20 @@
 from flask import Flask, request, render_template, url_for, flash, redirect, session
 from multiprocessing import Process
 from game import Mastermind
-from forms import GuessNumberForm, EnterGameForm, CreateGameForm, GenerateNumber
+from game_mongodb import PlayerDB, UserLogin
+from forms import GuessNumberForm, EnterGameForm, CreateGameForm, GenerateNumberForm, LoginForm, RegistrationForm
+from flask_bcrypt import Bcrypt
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 
 app = Flask(__name__)
-
 app.config['SECRET_KEY'] = '5b23e4fb78c69bca36a88002b9879755'
+bcrypt = Bcrypt()
+login_manager = LoginManager(app)
+
+
+@login_manager.user_loader
+def load_user(user_dict):
+    return UserLogin(user_dict)
 
 
 @app.route("/", methods=['GET'])
@@ -19,9 +28,93 @@ def home():
     return curl_homepage if "curl" in user_agent else template_homepage
 
 
+def check_invalid_registration(data_base, form):
+    if data_base.check_username(form.username.data):
+        flash(f'username "{form.username.data}" already in use')
+        invalid.append('username')
+    if data_base.check_email(form.email.data):
+        flash(f'email "{form.email.data}" already in use')
+        invalid.append('email')
+
+
+@app.route("/register", methods=['GET', 'POST'])
+def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
+
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
+        data_base = PlayerDB('mongodb://localhost:27017/', 'mastermind', 'players')
+        if data_base.create_player(form.username.data, form.email.data, hashed_password):
+            flash(f'account created for {form.username.data}')
+            player = data_base.find_document(form.username.data, "username")
+            login_user(UserLogin({key: player[key] for key in player if key != '_id'}))
+            return redirect(url_for('home'))
+        else:
+            check_invalid_registration(data_base, form)
+        return redirect(url_for('register', form=form))
+
+    return render_template('register.html',
+                           title='register',
+                           form=form)
+
+
+@app.route("/login", methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
+
+    form = LoginForm()
+    if form.validate_on_submit():
+        data_base = PlayerDB('mongodb://localhost:27017/', 'mastermind', 'players')
+        player = data_base.find_document(form.username.data, 'username')
+        if player == None:
+            flash(f'username "{form.username.data}" does not exist')
+            return redirect(url_for('login'))
+        else:
+            check = True
+            if player["email"] != form.email.data:
+                flash(f'wrong email ({form.email.data}) for username "{form.username.data}"')
+                check = False
+            if not bcrypt.check_password_hash(player["password"], form.password.data):
+                flash(f'wrong password for username "{form.username.data}"')
+                check = False
+            if not check:
+                return redirect(url_for('login'))
+            else:
+                flash('logged in')
+                login_user(UserLogin({key: player[key] for key in player if key != '_id'}))
+                return redirect(url_for('home'))
+
+    return render_template('login.html',
+                           title='login',
+                           form=form)
+
+
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    flash('logged out')
+    return redirect(url_for("home"))
+
+
+@app.route("/account")
+@login_required
+def account():
+    return f'{current_user.user_dict["email"]}'
+
+
+@app.route("/account/update", methods=['GET', 'POST'])
+@login_required
+def account_update():
+    return 'update name'
+
+
 @app.route("/gera_numero", methods=['GET', 'POST'])
 def gera_numero():
-    form = GenerateNumber()
+    form = GenerateNumberForm()
     user_agent = str(request.user_agent)
     numbers = Mastermind.generate_numbers()
     curl_numbers = f'{numbers}\n'

@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, IntegerField, PasswordField
-from wtforms.validators import DataRequired, Length, EqualTo
+from wtforms.validators import DataRequired, Length, EqualTo, Email
 
 
 class GuessNumberForm(FlaskForm):
@@ -22,5 +22,27 @@ class CreateGameForm(FlaskForm):
     submit = SubmitField('Play Game')
 
 
-class GenerateNumber(FlaskForm):
+class GenerateNumberForm(FlaskForm):
     submit = SubmitField('Generate Again')
+
+
+class RegistrationForm(FlaskForm):
+
+    username = StringField('Username', validators=[DataRequired()])
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    confirm_email = StringField('Confirm Email', validators=[EqualTo('email'),
+                                                             DataRequired(),
+                                                             Email()])
+    password = PasswordField('Password', validators=[DataRequired()])
+    confirm_password = PasswordField('Confirm Password',
+                                     validators=[EqualTo('password'),
+                                                 DataRequired()])
+    submit = SubmitField('Sing Up')
+
+
+class LoginForm(FlaskForm):
+
+    username = StringField('Username', validators=[DataRequired()])
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    password = PasswordField('Password', validators=[DataRequired()])
+    submit = SubmitField('Sing In')

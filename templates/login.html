@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h1>Login Now</h1>
+
+<div>
+    <form action="" method="POST">
+        {{ form.hidden_tag() }}
+        <div>
+            <p>{{ form.username.label }}</p>
+            <p>{{ form.username }}</p>
+        </div>
+        <div>
+            <p>{{ form.email.label }}</p>
+            <p>{{ form.email }}</p>
+        </div>
+        <div>
+            <p>{{ form.password.label }}</p>
+            <p>{{ form.password }}</p>
+        </div>
+        <div>
+            {{ form.submit }}
+        </div>
+    </form>
+</div>
+
+<small>
+    Already Have an account?
+    <a href="{{ url_for('register') }}" style="color: black">
+        <b>Sing Up</b>
+    </a>
+ </small>
+{% endblock content %}

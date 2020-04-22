@@ -64,14 +64,14 @@ class Mastermind:
         self.data_base.update_tries(self.game_id, tries)
 
     def check_gameid(self):
-        game = self.data_base.find_game(self.game_id)
+        game = self.data_base.find_document(self.game_id, "game_id")
         if game == None:
             return False
         return True
 
     def guess_digits(self, guess):
 
-        game = self.data_base.find_game(self.game_id)
+        game = self.data_base.find_document(self.game_id, "game_id")
         password = self.data_base.get_password(self.game_id)
         guess = self.check_fix_guess(guess, password)
         response = self.check_password(guess, password)
@@ -79,11 +79,11 @@ class Mastermind:
         tries = self.data_base.get_tries(self.game_id)
 
         if(response == "1"*len(password)):
-            self.data_base.delete_game(self.game_id)
+            self.data_base.delete_document(self.game_id, "game_id")
             return (f"Congrats!! you guessed it with {len(tries)} tries", "green",
                     password, tries[-1])
         elif len(tries) >= 10:
-            self.data_base.delete_game(self.game_id)
+            self.data_base.delete_document(self.game_id, "game_id")
             return ("you lost, try again", "red",
                     password, tries[-1])
 
@@ -105,4 +105,4 @@ if __name__ == '__main__':
     guess = Game.generate_numbers()
     Game.iniciate()
     print(Game.guess_digits(guess))
-    Game.data_base.delete_game(Game.game_id)
+    Game.data_base.delete_document(Game.game_id, "game_id")
