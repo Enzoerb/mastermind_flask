@@ -5,6 +5,7 @@ from game_mongodb import PlayerDB, UserLogin
 from forms import GuessNumberForm, EnterGameForm, CreateGameForm, GenerateNumberForm, LoginForm, RegistrationForm, AccountUpdateForm
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from extra_functions import clear_inactive, check_room_permission, enter_guess, format_guess_response, check_user_password, check_invalid_registration, update_user_information
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '5b23e4fb78c69bca36a88002b9879755'
@@ -23,18 +24,16 @@ def load_user(user_dict):
 @app.route("/mastermind", methods=['GET'])
 def home():
     user_agent = str(request.user_agent)
-    curl_homepage = 'HomePage\n'
+    curl_homepage = ''' HOME PAGE
+--//--
+routes:
+/gera_numero -> create a four digit set(similar to the password)
+/inicia -> create a game
+/tentativa/{game_id}?num={guess} -> guess {guess} in room {game_id}
+--//--
+'''
     template_homepage = render_template('homepage.html')
     return curl_homepage if "curl" in user_agent else template_homepage
-
-
-def check_invalid_registration(data_base, form):
-    if data_base.check_username(form.username.data):
-        flash(f'username "{form.username.data}" already in use')
-        invalid.append('username')
-    if data_base.check_email(form.email.data):
-        flash(f'email "{form.email.data}" already in use')
-        invalid.append('email')
 
 
 @app.route("/register", methods=['GET', 'POST'])
@@ -108,71 +107,25 @@ def account():
     return render_template("account.html", title="account")
 
 
-def check_password(password):
-    data_base = PlayerDB('mongodb://localhost:27017/', 'mastermind', 'players')
-    player = data_base.find_document(current_user.user_dict["username"], "username")
-    if bcrypt.check_password_hash(player["password"], password):
-        return True
-    return False
-
-
 @app.route("/account/update", methods=['GET', 'POST'])
 @login_required
 def account_update():
     username = current_user.user_dict["username"]
-    user_email = current_user.user_dict["email"]
+    email = current_user.user_dict["email"]
     form = AccountUpdateForm()
     if form.validate_on_submit():
-        if not check_password(form.password.data):
+        data_base = PlayerDB('mongodb://localhost:27017/', 'mastermind', 'players')
+        new_email = form.email.data
+        new_username = form.username.data
+        if not check_user_password(data_base, form.password.data):
             flash('wrong password')
             return redirect(url_for('account_update'))
-        data_base = PlayerDB('mongodb://localhost:27017/', 'mastermind', 'players')
-        if form.email.data == user_email and form.username.data == username:
-            current_user.user_dict["username"] = form.username.data
-            current_user.user_dict["email"] = form.email.data
-            flash('information sucessfully updated')
-            return redirect(url_for('account'))
-        elif form.email.data == user_email:
-            if data_base.check_username(form.username.data):
-                flash(f'username "{form.username.data}" already in use')
-                return redirect(url_for('account_update'))
-            else:
-                current_user.user_dict["username"] = form.username.data
-                current_user.user_dict["email"] = form.email.data
-                data_base.update_username(username, form.username.data)
-                flash('information sucessfully updated')
-                return redirect(url_for('account'))
-        elif form.username.data == username:
-            if data_base.check_email(form.email.data):
-                flash(f'email "{form.email.data}" already in use')
-                return redirect(url_for('account_update'))
-            else:
-                current_user.user_dict["username"] = form.username.data
-                current_user.user_dict["email"] = form.email.data
-                data_base.update_email(username, form.email.data)
-                flash('information sucessfully updated')
-                return redirect(url_for('account'))
         else:
-            check = True
-            if data_base.check_username(form.username.data):
-                flash(f'username "{form.username.data}" already in use')
-                check = False
-            if data_base.check_email(form.email.data):
-                flash(f'email "{form.email.data}" already in use')
-                check = False
-            if not check:
-                return redirect(url_for('account_update'))
-            else:
-                current_user.user_dict["username"] = form.username.data
-                current_user.user_dict["email"] = form.email.data
-                data_base.update_username(username, form.username.data)
-                data_base.update_email(username, form.email.data)
-                flash('information sucessfully updated')
-                return redirect(url_for('account'))
+            update_user_information(data_base, username, new_username, email, new_email)
 
     elif request.method == "GET":
         form.username.data = username
-        form.email.data = user_email
+        form.email.data = email
 
     return render_template("update.html", title="update", form=form)
 
@@ -250,69 +203,6 @@ def get_id():
     return curl_no_gameid if "curl" in user_agent else template_no_gameid
 
 
-def format_response(response, form):
-    user_agent = str(request.user_agent)
-    if type(response) == type(list()):
-        curl_game = f'remaining:{10-len(response)}\n{response[-1]}\n'
-        game_template = render_template("tentativa.html",
-                                        tries=response,
-                                        remaining=10-len(response),
-                                        actual_try=response[-1],
-                                        title=f'tentativa {len(response)+1}',
-                                        form=form)
-        return curl_game if "curl" in user_agent else game_template
-
-    else:
-        del session["game_id"]
-        del session["room_key"]
-        curl_end = f'{response[0]}\npassword: {response[2]}\nlast_try: {response[3]}\n'
-        end_template = render_template("lost_win.html",
-                                       response=response,
-                                       password=response[2],
-                                       last_try=response[3],
-                                       title='fim')
-        return curl_end if "curl" in user_agent else end_template
-
-
-def enter_key(game):
-    game_id = game.game_id
-    form = GuessNumberForm()
-    if form.validate_on_submit():
-        return redirect(url_for('tentativa',
-                                game_id=game_id, num=form.guess.data))
-
-    data_base = game.data_base
-    tries = data_base.get_tries(game_id)
-    if len(tries) == 0:
-        template_keyerror = render_template("tentativa.html",
-                                            tries=None,
-                                            remaining=10,
-                                            actual_try={'guess': 'Nothing Entered',
-                                                        'response': 'Waiting First Guess'},
-                                            title=f'tentativa 1',
-                                            form=form)
-    else:
-        template_keyerror = render_template("tentativa.html",
-                                            tries=tries,
-                                            remaining=10-len(tries),
-                                            actual_try=tries[-1],
-                                            title=f'tentativa {len(tries)+1}',
-                                            form=form)
-    return template_keyerror
-
-
-def check_permission(game, game_id):
-    if "game_id" in session:
-        if str(session["game_id"]) != str(game_id):
-            return False
-    if "room_key" in session:
-        if game.confirm_key(session["room_key"]):
-            session["game_id"] = game_id
-            return True
-
-    return False
-
-
 @app.route("/tentativa/<int:game_id>", methods=['GET', 'POST'])
 def tentativa(game_id):
     user_agent = str(request.user_agent)
@@ -322,7 +212,7 @@ def tentativa(game_id):
         flash(alert)
         return alert if 'curl' in user_agent else redirect(url_for("get_id"))
 
-    if not check_permission(game, game_id):
+    if not check_room_permission(game, game_id):
         alert = 'please enter the password'
         curl_alert = 'make sure you created the game and it has no password\n'
         flash(alert)
@@ -332,7 +222,7 @@ def tentativa(game_id):
         guess = request.args['num']
     except KeyError:
         curl_keyerror = f'please enter a guess in key \"num\"\n'
-        template_keyerror = enter_key(game)
+        template_keyerror = enter_guess(game)
         return curl_keyerror if 'curl' in user_agent else template_keyerror
 
     form = GuessNumberForm()
@@ -341,15 +231,8 @@ def tentativa(game_id):
                                 game_id=game_id, num=form.guess.data))
 
     response = game.guess_digits(guess)
-    formatted_response = format_response(response, form)
+    formatted_response = format_guess_response(response, form)
     return formatted_response
-
-
-def clear_inactive():
-    game = Mastermind('mongodb://localhost:27017/', 'mastermind', 'games')
-    data_base = game.data_base
-    while True:
-        data_base.delete_inactive()
 
 
 if __name__ == '__main__':
