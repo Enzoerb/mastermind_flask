@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+{% block content %}
+
+    {% if current_user.is_authenticated %}
+        <small>
+            <a href="{{ url_for('account') }}" style="color: black">
+                Account
+            </a>
+            &ensp;
+            <a href="{{ url_for('logout') }}" style="color: black">
+                Logout
+            </a>
+        </small>
+    {% else %}
+        <small>
+            <a href="{{ url_for('register') }}" style="color: black">
+                Register
+            </a>
+            &ensp;
+            <a href="{{ url_for('login') }}" style="color: black">
+                Login
+            </a>
+        </small>
+    {% endif %}
+
+    <h1>Mastermind Home</h1>
+    <hr/>
+    <a href="{{ url_for('gera_numero') }}" style="color: black">
+        <h2><b>Gera Números</b></h2>
+    </a>
+    <a href="{{ url_for('inicia') }}" style="color: black">
+        <h2><b>Inicia</b></h2>
+    </a>
+    <a href="{{ url_for('get_id') }}" style="color: black">
+        <h2><b>Tentativa</b></h2>
+    </a>
+{% endblock content %}
