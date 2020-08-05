@@ -1,3 +1,5 @@
 password.txt
 venv
 __pycache__
+*geckodriver.log
+*screenshot/
