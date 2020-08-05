@@ -79,11 +79,9 @@ class Mastermind:
         tries = self.data_base.get_tries(self.game_id)
 
         if(response == "1"*len(password)):
-            self.data_base.delete_document(self.game_id, "game_id")
             return (f"Congrats!! you guessed it with {len(tries)} tries", "green",
                     password, tries[-1])
         elif len(tries) >= 10:
-            self.data_base.delete_document(self.game_id, "game_id")
             return ("you lost, try again", "red",
                     password, tries[-1])
 
